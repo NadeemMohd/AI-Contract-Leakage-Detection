@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-chart-line text-success me-2"></i>
+            Contract Analysis Results
+        </h2>
+    </div>
+</div>
+
+{% if results %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="fas fa-file-contract fa-2x text-primary mb-2"></i>
+                <h4>{{ results.total_contracts }}</h4>
+                <small class="text-muted">Contracts Analyzed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                <h4>{{ (results.azure_leakage_issues|length) + (results.customer_leakage_issues|length) }}</h4>
+                <small class="text-muted">Leakage Issues Found</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="fas fa-project-diagram fa-2x text-info mb-2"></i>
+                <h4>{{ results.knowledge_graph_nodes }}</h4>
+                <small class="text-muted">Knowledge Graph Nodes</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center {% if results.model_trained %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-body">
+                <i class="fas fa-robot fa-2x {% if results.model_trained %}text-success{% else %}text-danger{% endif %} mb-2"></i>
+                <h4>{% if results.model_trained %}Trained{% else %}Not Trained{% endif %}</h4>
+                <small class="text-muted">AI Model Status</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Azure-NadComms Leakage Issues -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-cloud me-2"></i>
+                    Azure ↔ NadComms Contract Issues
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if results.azure_leakage_issues %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Contract</th>
+                                    <th>Issue Type</th>
+                                    <th>Description</th>
+                                    <th>Severity</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for issue in results.azure_leakage_issues %}
+                                <tr>
+                                    <td><code>{{ issue.contract }}</code></td>
+                                    <td>
+                                        <span class="badge bg-info">{{ issue.type }}</span>
+                                    </td>
+                                    <td>{{ issue.description }}</td>
+                                    <td>
+                                        <span class="badge {% if issue.severity == 'High' %}bg-danger{% elif issue.severity == 'Medium' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ issue.severity }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="showRecommendation('{{ issue.type }}')">
+                                            <i class="fas fa-lightbulb"></i> Recommend
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        No leakage issues detected in Azure-NadComms contracts.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Leakage Issues -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    NadComms ↔ Customer Contract Issues
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if results.customer_leakage_issues %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Contract</th>
+                                    <th>Issue Type</th>
+                                    <th>Description</th>
+                                    <th>Severity</th>
+                                    <th>Potential Impact</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for issue in results.customer_leakage_issues %}
+                                <tr>
+                                    <td><code>{{ issue.contract }}</code></td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ issue.type }}</span>
+                                    </td>
+                                    <td>{{ issue.description }}</td>
+                                    <td>
+                                        <span class="badge {% if issue.severity == 'High' %}bg-danger{% elif issue.severity == 'Medium' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ issue.severity }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-success fw-bold">
+                                            ${{ "{:,}".format(50000 if issue.severity == 'High' else 25000) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-success" onclick="showRecommendation('{{ issue.type }}')">
+                                            <i class="fas fa-lightbulb"></i> Recommend
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        No leakage issues detected in customer contracts.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recommendations Panel -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    AI Recommendations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recommendationContent">
+                    <p class="text-muted">Click on "Recommend" buttons above to see AI-powered recommendations for specific issues.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Metadata -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Analysis Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Analysis Date:</strong> {{ results.analysis_date[:19] | replace('T', ' ') }}<br>
+                        <strong>Knowledge Graph Edges:</strong> {{ results.knowledge_graph_edges }}<br>
+                        <strong>Model Training Status:</strong> 
+                        <span class="badge {% if results.model_trained %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if results.model_trained %}Successfully Trained{% else %}Training Failed{% endif %}
+                        </span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Total Potential Savings:</strong> 
+                        <span class="text-success fw-bold fs-4">
+                            ${{ "{:,}".format(((results.azure_leakage_issues|length) + (results.customer_leakage_issues|length)) * 37500) }}
+                        </span><br>
+                        <small class="text-muted">Estimated based on industry averages</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                <h4>No Analysis Results Available</h4>
+                <p class="text-muted">Please upload contracts and run the analysis first.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i>Upload Contracts
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showRecommendation(issueType) {
+    const recommendations = {
+        'Hardware Usage Mismatch': {
+            title: 'Hardware Usage Optimization',
+            content: `
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-server me-2"></i>Recommended Actions:</h6>
+                    <ul>
+                        <li>Implement automated resource monitoring to track actual vs committed usage</li>
+                        <li>Set up alerts for usage thresholds (80% of committed resources)</li>
+                        <li>Negotiate flexible scaling clauses in future contracts</li>
+                        <li>Consider reserved instance pricing for predictable workloads</li>
+                        <li>Review and optimize resource allocation quarterly</li>
+                    </ul>
+                    <strong>Expected Savings:</strong> 15-25% of infrastructure costs
+                </div>
+            `
+        },
+        'Missed Renewal Penalty': {
+            title: 'Renewal Management Enhancement',
+            content: `
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-calendar-alt me-2"></i>Recommended Actions:</h6>
+                    <ul>
+                        <li>Implement automated renewal tracking system</li>
+                        <li>Set up 90, 60, and 30-day renewal reminders</li>
+                        <li>Negotiate penalty clauses for late renewals</li>
+                        <li>Create renewal decision workflows with stakeholder approvals</li>
+                        <li>Maintain a contract renewal calendar dashboard</li>
+                    </ul>
+                    <strong>Risk Mitigation:</strong> Prevents 5-15% revenue loss from missed renewals
+                </div>
+            `
+        },
+        'Volume Discount Opportunity': {
+            title: 'Volume Discount Optimization',
+            content: `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-chart-line me-2"></i>Recommended Actions:</h6>
+                    <ul>
+                        <li>Analyze usage patterns to identify discount tier opportunities</li>
+                        <li>Consolidate purchases across departments to reach volume thresholds</li>
+                        <li>Negotiate tiered pricing structures in new contracts</li>
+                        <li>Set up automated alerts when approaching discount thresholds</li>
+                        <li>Review and claim all eligible volume discounts quarterly</li>
+                    </ul>
+                    <strong>Potential Savings:</strong> 10-30% through optimized volume pricing
+                </div>
+            `
+        }
+    };
+    
+    const recommendation = recommendations[issueType];
+    if (recommendation) {
+        document.getElementById('recommendationContent').innerHTML = `
+            <h6>${recommendation.title}</h6>
+            ${recommendation.content}
+        `;
+    }
+}
+
+// Auto-refresh every 30 seconds if analysis is running
+setInterval(function() {
+    // Check if we need to refresh results
+    fetch('/contracts')
+        .then(response => response.json())
+        .then(data => {
+            // Update contract count in sidebar
+            document.getElementById('contract-count').textContent = `Contracts: ${data.length}`;
+        });
+}, 30000);
+</script>
+{% endblock %}

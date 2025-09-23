@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-shield-alt text-primary me-2"></i>
+            AI-Powered Contract Leakage Detection
+        </h2>
+        <p class="lead text-muted">Protect your enterprise revenue by detecting contract leakage in SaaS agreements</p>
+    </div>
+</div>
+
+<!-- Contract Upload Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Contracts</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6>Select Contract Type:</h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="card contract-type-card" onclick="selectContractType('azure-nadcomms')">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-cloud fa-2x text-primary mb-2"></i>
+                                        <h6>Azure ↔ NadComms</h6>
+                                        <small class="text-muted">Infrastructure Contract</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card contract-type-card" onclick="selectContractType('nadcomms-customerA')">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-user-tie fa-2x text-success mb-2"></i>
+                                        <h6>NadComms ↔ Customer A</h6>
+                                        <small class="text-muted">Service Contract</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card contract-type-card" onclick="selectContractType('nadcomms-customerB')">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-user-tie fa-2x text-info mb-2"></i>
+                                        <h6>NadComms ↔ Customer B</h6>
+                                        <small class="text-muted">Service Contract</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card contract-type-card" onclick="selectContractType('nadcomms-customerC')">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-user-tie fa-2x text-warning mb-2"></i>
+                                        <h6>NadComms ↔ Customer C</h6>
+                                        <small class="text-muted">Service Contract</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+                    <h5>Drop PDF contracts here or click to browse</h5>
+                    <p class="text-muted">Select a contract type above, then upload your PDF files</p>
+                    <input type="file" id="fileInput" accept=".pdf" style="display: none;" multiple>
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()" disabled id="uploadBtn">
+                        <i class="fas fa-plus me-2"></i>Choose Files
+                    </button>
+                </div>
+                
+                <div id="uploadStatus" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-brain me-2"></i>AI Analysis & Model Training</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>Retrain and Analyze Contracts</h6>
+                        <p class="text-muted">
+                            The AI model will analyze uploaded contracts to detect potential revenue leakage including:
+                        </p>
+                        <ul class="text-muted">
+                            <li>Hardware usage vs commitment mismatches</li>
+                            <li>Missed renewal penalties</li>
+                            <li>Unclaimed volume discounts</li>
+                            <li>SLA violations and penalties</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <button class="btn btn-success btn-lg" onclick="analyzeContracts()" id="analyzeBtn">
+                            <i class="fas fa-cogs me-2"></i>Retrain & Analyze
+                        </button>
+                        <div id="analysisStatus" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-file-contract fa-2x text-primary mb-2"></i>
+                <h4 id="totalContracts">0</h4>
+                <small class="text-muted">Total Contracts</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                <h4 id="leakageIssues">0</h4>
+                <small class="text-muted">Leakage Issues</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                <h4 id="potentialSavings">$0</h4>
+                <small class="text-muted">Potential Savings</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-robot fa-2x text-info mb-2"></i>
+                <h4 id="modelStatus">Not Trained</h4>
+                <small class="text-muted">AI Model Status</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedContractType = null;
+
+function selectContractType(type) {
+    // Remove previous selection
+    document.querySelectorAll('.contract-type-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selection to clicked card
+    event.currentTarget.classList.add('selected');
+    selectedContractType = type;
+    
+    // Enable upload button
+    document.getElementById('uploadBtn').disabled = false;
+    document.getElementById('uploadArea').style.borderColor = '#667eea';
+}
+
+// File upload handling
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    if (!selectedContractType) {
+        alert('Please select a contract type first');
+        return;
+    }
+    
+    const files = e.target.files;
+    for (let file of files) {
+        uploadFile(file);
+    }
+});
+
+// Drag and drop handling
+document.getElementById('uploadArea').addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.backgroundColor = '#f8f9ff';
+});
+
+document.getElementById('uploadArea').addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.backgroundColor = '';
+});
+
+document.getElementById('uploadArea').addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.backgroundColor = '';
+    
+    if (!selectedContractType) {
+        alert('Please select a contract type first');
+        return;
+    }
+    
+    const files = e.dataTransfer.files;
+    for (let file of files) {
+        if (file.type === 'application/pdf') {
+            uploadFile(file);
+        }
+    }
+});
+
+function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('contract_type', selectedContractType);
+    
+    const statusDiv = document.getElementById('uploadStatus');
+    statusDiv.innerHTML += `<div class="alert alert-info">Uploading ${file.name}...</div>`;
+    
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML += `<div class="alert alert-success">${data.message}</div>`;
+            loadContractCount();
+        } else {
+            statusDiv.innerHTML += `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        statusDiv.innerHTML += `<div class="alert alert-danger">Upload failed: ${error}</div>`;
+    });
+}
+
+function analyzeContracts() {
+    const statusDiv = document.getElementById('analysisStatus');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    
+    analyzeBtn.disabled = true;
+    statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Analyzing contracts...';
+    
+    fetch('/analyze', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            statusDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+        } else {
+            statusDiv.innerHTML = '<div class="alert alert-success">Analysis completed successfully!</div>';
+            updateStats(data);
+            setTimeout(() => {
+                window.location.href = '/results';
+            }, 2000);
+        }
+        analyzeBtn.disabled = false;
+    })
+    .catch(error => {
+        statusDiv.innerHTML = `<div class="alert alert-danger">Analysis failed: ${error}</div>`;
+        analyzeBtn.disabled = false;
+    });
+}
+
+function updateStats(data) {
+    document.getElementById('totalContracts').textContent = data.total_contracts || 0;
+    document.getElementById('leakageIssues').textContent = 
+        (data.azure_leakage_issues?.length || 0) + (data.customer_leakage_issues?.length || 0);
+    document.getElementById('modelStatus').textContent = data.model_trained ? 'Trained' : 'Not Trained';
+    
+    // Estimate potential savings (simplified calculation)
+    const totalIssues = (data.azure_leakage_issues?.length || 0) + (data.customer_leakage_issues?.length || 0);
+    const estimatedSavings = totalIssues * 50000; // $50k per issue estimate
+    document.getElementById('potentialSavings').textContent = '$' + estimatedSavings.toLocaleString();
+}
+
+// Load initial stats
+document.addEventListener('DOMContentLoaded', function() {
+    loadContractCount();
+});
+
+function loadContractCount() {
+    fetch('/contracts')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalContracts').textContent = data.length;
+        });
+}
+</script>
+{% endblock %}
